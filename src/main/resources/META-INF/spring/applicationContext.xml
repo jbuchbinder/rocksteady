@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context" xmlns:jee="http://www.springframework.org/schema/jee" xmlns:tx="http://www.springframework.org/schema/tx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=" http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd    http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.0.xsd    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+
+	<context:property-placeholder location="classpath*:META-INF/spring/database.properties,classpath*:META-INF/rocksteady.properties,classpath*:META-INF/spring/email.properties,classpath*:META-INF/spring/log4j.properties"/>
+
+	<context:spring-configured/>
+
+	<context:component-scan base-package="com.admob.rocksteady">
+		<context:exclude-filter expression=".*_Roo_.*" type="regex"/>
+		<context:exclude-filter expression="org.springframework.stereotype.Controller" type="annotation"/>
+	</context:component-scan>
+
+  <context:annotation-config/>
+  
+  <!-- Let's define some beans to do work -->
+  <bean class="com.admob.rocksteady.common.ServiceManager" destroy-method="shutdown" id="serviceManager" init-method="initialize">
+    <property name="services">
+      <list>
+            <value>com.admob.rocksteady.router.cep.ComplexEventManager</value>
+            <value>com.admob.rocksteady.router.MessageManager</value> 
+      </list>
+   </property>
+  </bean>  
+  
+  <!-- Message Manager, takes care connection to rabbit, connect to Exchange point -->
+  <bean class="com.admob.rocksteady.router.MessageManager" factory-method="getInstance" id="messageManager">
+    <property name="mqConnectionFactory">
+      <!-- Setup MQ connection factor that uses the mqParams -->
+		  <bean class="com.rabbitmq.client.ConnectionFactory" id="mqConnectionFactory">
+		      <constructor-arg>
+					  <!-- Setup MQ connection parameters -->
+					  <bean class="com.rabbitmq.client.ConnectionParameters" id="mqParams">
+					    <property name="Username" value="${rabbitUser}"/>
+					    <property name="Password" value="${rabbitPassword}"/>
+					    <property name="VirtualHost" value="${rabbitVirtualHost}"/>
+					    <property name="RequestedHeartbeat" value="${rabbitRequestedHeartbeat}"/>
+					  </bean>		      
+		      </constructor-arg>
+		  </bean>
+    </property>
+    <property name="rabbitHostname" value="${rabbitHostname}"/>
+    <property name="rabbitExchange" value="${rabbitExchange}"/>
+    <property name="rabbitExchangeLog" value="${rabbitExchangeLog}"/>
+    <property name="rabbitQueue" value="${rabbitQueue}"/>    
+    <property name="rabbitDurable" value="${rabbitDurable}"/>
+    <property name="rabbitExchangeType" value="${rabbitExchangeType}"/>
+    <property name="rabbitRoutingKey" value="${rabbitRoutingKey}"/>
+    <property name="rabbitAutoDelete" value="${rabbitAutoDelete}"/>
+    <property name="retryInterval" value="${retryInterval}"/>
+  </bean>
+  
+    
+  <!-- Take cares the connection to graphite server -->
+  <bean class="com.admob.rocksteady.util.GraphiteInterface" id="graphiteInterface">
+    <constructor-arg value="${graphiteServer}"/>
+    <constructor-arg value="${graphitePort}"/>
+    <constructor-arg value="${appName}"/>    
+    <property name="enableSend" value="${graphiteEnableSend}"/>
+  </bean>
+
+  <!-- This is our nagios sender -->
+  <bean class="com.googlecode.jsendnsca.core.NagiosPassiveCheckSender" id="nagiosSender">
+    <constructor-arg>
+		  <bean class="com.googlecode.jsendnsca.core.NagiosSettings" id="nagioSettings">
+		    <property name="nagiosHost" value="${nagiosServer}"/>
+		    <property name="password" value="${nagiosNscaPassword}"/>
+		    <property name="port" value="${nagiosNscaPort}"/>
+		  </bean>     
+    </constructor-arg>
+  </bean>
+  
+  
+  
+  <bean class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close" id="dataSource">
+        <property name="driverClassName" value="${database.driverClassName}"/>
+        <property name="url" value="${database.url}"/>
+        <property name="username" value="${database.username}"/>
+        <property name="password" value="${database.password}"/>
+  </bean>
+  <bean class="org.springframework.orm.jpa.JpaTransactionManager" id="transactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory"/>
+  </bean>
+  <tx:annotation-driven mode="aspectj" transaction-manager="transactionManager"/>
+  <bean class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean" id="entityManagerFactory">
+        <property name="dataSource" ref="dataSource"/>
+  </bean>	
+	
+	<!-- Import other useful beans xml -->
+  <import resource="email.xml"/>
+  <import resource="timerTasks.xml"/>
+  <import resource="eplStatements.xml"/>
+  <import resource="epl.xml"/>
+  
+  
+
+</beans>

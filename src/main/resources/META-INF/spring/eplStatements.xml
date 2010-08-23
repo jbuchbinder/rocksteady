@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+       xmlns:aop="http://www.springframework.org/schema/aop" 
+       xmlns:context="http://www.springframework.org/schema/context" 
+       xmlns:jee="http://www.springframework.org/schema/jee" 
+       xmlns:tx="http://www.springframework.org/schema/tx" 
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xsi:schemaLocation=" http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd    http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.0.xsd    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+  
+  <bean class="com.admob.rocksteady.router.cep.StatementBean" id="ustoreAlerts">
+    <constructor-arg value="SELECT name, colo, avg(value)  as value, app
+                          FROM Metric(app='ustore' and (name='request.50th' or name='request.99th')).std:groupby(colo,name).win:time_batch(${cepTimeBatchEverest} sec)
+                          GROUP BY name, colo, app
+                          HAVING ( name='request.50th' AND avg(value) > 10 ) OR
+                          ( name='request.99th' AND avg(value) > 100 )                                                                                                    
+                          "/>
+    <property name="name" value="ustoreAlerts"/>
+    <property name="listeners">
+     <list>
+       <bean class="com.admob.rocksteady.reactor.AlertUs">
+           <property name="type" value="averagedThreshold"/>
+           <property name="recipients">
+             <list>
+               <value>email@myteam.com</value>
+             </list>
+           </property>
+       </bean>
+      </list>
+    </property>
+  </bean>
+ 
+ 
+  <bean class="com.admob.rocksteady.router.cep.StatementBean" id="hadoopAggregated">
+  <constructor-arg value="SELECT name, colo, retention, app, sum(value)  as value
+                          FROM Metric(app='hadoop' and retention='1min').std:unique(hostname,colo,name).win:time(100 sec)
+                          WHERE name like 'datanode%'
+                          GROUP BY colo,name,retention,app
+                          OUTPUT every 1 minute
+                          LIMIT 4
+                          "/>
+
+    <property name="name" value="hadoopAggregated"/>
+    <property name="listeners">
+     <list>
+       <bean class="com.admob.rocksteady.reactor.Graphite">
+           
+           <property name="suffix" value="aggregated"/>
+       </bean>
+     </list>
+    </property>
+  </bean> 
+
+  <bean class="com.admob.rocksteady.router.cep.StatementBean" id="metricAveraged">
+  <constructor-arg value="SELECT name, colo, avg(value)  as value, retention, app
+                          FROM Metric(app='admixer' or app='ustore').std:groupby(colo,name,app).win:time_batch(${cepTimeBatchEverest} sec)
+                          GROUP BY name, colo, retention, app                                                                                                  
+                          "/>
+    <property name="name" value="metricAveraged"/>
+    <property name="listeners">
+     <list>
+       <bean class="com.admob.rocksteady.reactor.Graphite">
+           <property name="suffix" value="averaged"/>
+       </bean>    
+     </list>
+    </property>
+  </bean>
+  
+  <bean class="com.admob.rocksteady.router.cep.StatementBean" id="logErrorCount">
+  <constructor-arg value="SELECT irstream name, error, last(value), count(name) as count
+                             FROM Log.win:time_batch(${cepTimeBatch} sec)                           
+                             GROUP BY name, error                                                                           "/>
+    <property name="name" value="logErrorCount"/>
+    <property name="listeners">
+     <list>
+       <bean class="com.admob.rocksteady.reactor.AlertUs">
+           <property name="type" value="log"/>
+       </bean>
+     </list>
+    </property>
+  </bean>     
+  
+  <!-- Triggered when we detect timeout -->
+  <bean class="com.admob.rocksteady.router.cep.StatementBean" id="everestTimeOut">
+  <constructor-arg value="SELECT irstream *
+                         FROM Metric(app='admixer')                         
+                         WHERE ((name = 'adworker.timeout_rate' AND value > 5) OR
+                         (name = 'services.profiling.timeouts' AND value > 5) OR
+                         (name = 'ustore.timeout_rate' AND value > 5) OR
+                         (name = 'ustore.update.timeout_rate' AND value > 5) OR     
+                         (name = 'adworker.targeting.timeouts.rate' AND value > 5) )                                     
+                         "/>
+    <property name="name" value="everestTimeOut"/>
+    <property name="listeners">
+     <list>
+       <bean class="com.admob.rocksteady.reactor.AlertUs">
+           <property name="type" value="latency_single"/>
+       </bean>
+     </list>
+    </property>
+  </bean>   
+  
+  <bean class="com.admob.rocksteady.router.cep.StatementBean" id="everestDataWindow">
+  <constructor-arg value="CREATE WINDOW everestDataWindow.win:time(75 sec)    
+                          as select * from Metric  
+                         "/>
+  </bean>  
+  
+  <bean class="com.admob.rocksteady.router.cep.StatementBean" id="everestDataWindowInsert">
+  <constructor-arg value="INSERT INTO everestDataWindow SELECT * FROM Metric(app='admixer')
+                        "/>
+  </bean>
+
+
+  <!-- Leaving it here so we can have a separate copy -->  
+  <bean class="com.admob.rocksteady.router.cep.StatementBean" id="everestLatencyEvent">
+    <constructor-arg value="INSERT INTO Latency
+                         SELECT m.* 
+                         FROM Metric(app='admixer' AND (name='requests.request_stats.50th' 
+                         OR name = 'requests.request_stats.95th' 
+                         OR name = 'requests.request_stats.99th')).win:time_batch(${cepTimeBatchEverest} sec) as m
+                                        
+                         WHERE ( (m.name = 'requests.request_stats.50th' AND m.value > 50) OR
+                         (m.name = 'requests.request_stats.95th' AND m.value > 125) OR
+                         (m.name = 'requests.request_stats.99th' AND m.value > 175) ) AND ( ( 
+                         not exists (SELECT timestamp AS last_deploy From deployDataWindow WHERE 
+                         colo = m.colo AND hostname = m.hostname AND app = m.app) ) OR
+                         ( (
+                         m.timestamp - 
+                         (SELECT timestamp AS last_deploy From deployDataWindow WHERE 
+                         colo = m.colo AND hostname = m.hostname AND app = m.app) ) > ${cepEverestWarmUpTime}) ) AND hostname != 'beach168'
+                                                                                                                 
+                         "/>                                                                                                            
+    <property name="name" value="everestLatencyEvent"/>
+                         
+    <property name="listeners">
+     <list>
+       <bean class="com.admob.rocksteady.reactor.AlertUs">
+           <property name="type" value="latency_single"/>
+           <property name="recipients">
+             <list>
+               <value>email@myteam.com</value>
+             </list>
+           </property>
+           
+       </bean>
+     </list>
+    </property>                         
+  </bean>
+  
+  <bean class="com.admob.rocksteady.router.cep.StatementBean" id="everestLatencyTrigger">
+  <constructor-arg value="on Latency(app='admixer') as latency
+                         SELECT *  
+                         FROM everestDataWindow as win                         
+                         WHERE latency.hostname = win.hostname AND latency.timestamp = win.timestamp
+                         AND latency.colo = win.colo 
+                         AND ( win.name like 'services.profiling%.50th' OR
+                         win.name like 'services.profiling%.90th' OR
+                         win.name like 'services.profiling%.95th' OR
+                         win.name like 'services.profiling%.99th' OR
+                         win.name like 'services.profiling.timeouts' OR
+                         win.name like 'services.ustore%.50th' OR
+                         win.name like 'services.ustore%.90th' OR
+                         win.name like 'services.ustore%.95th' OR
+                         win.name like 'services.ustore%.99th' OR
+                         win.name = 'services.ustore.timeout_rate' OR
+                         win.name = 'services.ustore.update.timeout_rate' OR
+                         win.name = 'services.adworker.thrift.50th' OR
+                         win.name = 'services.adworker.thrift.90th' OR
+                         win.name = 'services.adworker.thrift.95th' OR
+                         win.name = 'services.adworker.thrift.99th' OR
+                         win.name = 'services.adworker.timeout_rate' OR
+                         win.name = 'requests.request_stats.requests_per_second' OR
+                         win.name = 'common.jvm_megs_used' OR
+                         win.name = 'common.revision'
+                         )
+                         AND win.name NOT LIKE 'services.ustore.setup%' AND
+                         win.app = 'admixer'
+                         ORDER BY win.timestamp, win.name                                                                                              
+                         "/>
+    <property name="name" value="everestLatencyTrigger"/>
+    <property name="listeners">
+     <list>
+       <bean class="com.admob.rocksteady.reactor.AlertUs">
+           <property name="type" value="latency_multi"/>
+       </bean>
+     </list>
+    </property>
+  </bean>   
+  
+  <!-- Show case using match_recognize to find sequence of event -->
+  <!-- If the value change continuously for every event, we would miss every other one  -->
+  <bean class="com.admob.rocksteady.router.cep.StatementBean" id="newCodeDeploy">
+    <constructor-arg value="INSERT INTO Deploy
+                         SELECT *
+                         FROM Metric(name='common.revision')                         
+                         match_recognize (
+                           partition by colo, hostname
+                           measures A.value as revision,  A.colo as colo, A.hostname as hostname, A.app as app, A.timestamp as timestamp
+                           pattern (A)
+                           define 
+                             A as A.value > prev(A.value)
+                         )                                                                                                                    
+                         "/>
+    <property name="listeners">
+     <list>
+       <bean class="com.admob.rocksteady.reactor.AlertUs">
+           <property name="type" value="deploy"/>
+       </bean>
+     </list>
+    </property>                         
+  </bean>  
+  
+  <bean class="com.admob.rocksteady.router.cep.StatementBean" id="deployDataWindow">
+  <constructor-arg value="CREATE WINDOW deployDataWindow.std:groupby(colo,hostname,app).win:length(1)    
+                          as SELECT * from Deploy                                                                                                                   
+                         "/>
+  </bean>  
+  <bean class="com.admob.rocksteady.router.cep.StatementBean" id="deployDataWindowInsert">
+      <constructor-arg value="INSERT INTO deployDataWindow SELECT * FROM Deploy"/>                                                                                                                                         
+  </bean>  
+  
+        
+</beans>
