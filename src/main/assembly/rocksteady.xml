@@ -6,6 +6,12 @@
     <format>tar.gz</format>
     <format>zip</format>
   </formats>
+  <files>
+    <file>
+      <source>start.sh</source>
+      <fileMode>493</fileMode><!-- for some silly reason fileMode inside a file tag is interpreted as decimal, not octal. decimal 493 is octal 755-->
+    </file>
+  </files>
   <fileSets>
     <fileSet>
       <includes>
@@ -13,7 +19,6 @@
         <include>LICENSE*</include>
         <include>NOTICE*</include>
         <include>COPYING*</include>
-        <include>*.sh</include>
         <include>setup.sql</include>
       </includes>
     </fileSet>

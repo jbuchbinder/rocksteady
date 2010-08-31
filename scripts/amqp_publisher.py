@@ -18,8 +18,8 @@ def signal_handler(signal, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 COLLECT_INTERVAL = 5
-METRIC_PREFIX2 = "1min.admixer.common.revision"
 METRIC_PREFIX = "1min.admixer.requests.request_stats.99th"
+METRIC_PREFIX2 = "1min.admixer.common.revision"
 COLO_LIST = ['sc9','dl2','am1']
 HOST_LIST = ['prf101','prf102','prf103']
 #COLO_LIST = ['dl2']
@@ -46,7 +46,7 @@ while True:
       chan.basic_publish(msg,exchange=setting.EXCHANGE)
 
       key = METRIC_PREFIX2 + "." + colo + "." + host
-      value = str(random.randint(50,200))
+      value = str(random.randint(1,10))
       msg_raw = key + " " + value + " " + timestamp + "\n"
       msg = amqp.Message(msg_raw)
 #      print msg_raw
