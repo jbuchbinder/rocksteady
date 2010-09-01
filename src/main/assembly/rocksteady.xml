@@ -23,6 +23,12 @@
       </includes>
     </fileSet>
     <fileSet>
+      <directory>scripts</directory>
+      <excludes>
+        <exclude>*.pyc</exclude>
+      </excludes>
+    </fileSet>
+    <fileSet>
       <directory>target/classes</directory>
       <outputDirectory>classes</outputDirectory>
     </fileSet>

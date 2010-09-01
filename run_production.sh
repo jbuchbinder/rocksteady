@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-
+#
+# *** NOT BEING USED ***
+# *** LEFT HERE FOR REFERENCE ***
+#
 # Should be run within target directory
 
 conf_dir=classes/META-INF
