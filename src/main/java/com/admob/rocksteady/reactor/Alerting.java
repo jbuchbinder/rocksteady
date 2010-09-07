@@ -38,8 +38,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Implement Esper UpdateListener to be used when event is triggered.  This is testing the base form.
  *
  */
-public class AlertUs implements UpdateListener  {
-    private static final Logger logger = LoggerFactory.getLogger(AlertUs.class);
+public class Alerting implements UpdateListener  {
+    private static final Logger logger = LoggerFactory.getLogger(Alerting.class);
 
     private Object id;
     private String type;
