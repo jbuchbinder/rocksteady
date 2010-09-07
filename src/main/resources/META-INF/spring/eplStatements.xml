@@ -17,7 +17,7 @@
     <property name="name" value="ustoreAlerts"/>
     <property name="listeners">
      <list>
-       <bean class="com.admob.rocksteady.reactor.AlertUs">
+       <bean class="com.admob.rocksteady.reactor.Alerting">
            <property name="type" value="averagedThreshold"/>
            <property name="recipients">
              <list>
@@ -55,7 +55,6 @@
                           FROM Metric(app='admixer' or app='ustore').std:groupby(colo,name,app).win:time_batch(${cepTimeBatchEverest} sec)
                           GROUP BY name, colo, retention, app                                                                                                  
                           "/>
-    <property name="name" value="metricAveraged"/>
     <property name="listeners">
      <list>
        <bean class="com.admob.rocksteady.reactor.Graphite">
@@ -72,7 +71,7 @@
     <property name="name" value="logErrorCount"/>
     <property name="listeners">
      <list>
-       <bean class="com.admob.rocksteady.reactor.AlertUs">
+       <bean class="com.admob.rocksteady.reactor.Alerting">
            <property name="type" value="log"/>
        </bean>
      </list>
@@ -92,7 +91,7 @@
     <property name="name" value="everestTimeOut"/>
     <property name="listeners">
      <list>
-       <bean class="com.admob.rocksteady.reactor.AlertUs">
+       <bean class="com.admob.rocksteady.reactor.Alerting">
            <property name="type" value="latency_single"/>
        </bean>
      </list>
@@ -134,7 +133,7 @@
                          
     <property name="listeners">
      <list>
-       <bean class="com.admob.rocksteady.reactor.AlertUs">
+       <bean class="com.admob.rocksteady.reactor.Alerting">
            <property name="type" value="latency_single"/>
            <property name="recipients">
              <list>
@@ -180,7 +179,7 @@
     <property name="name" value="everestLatencyTrigger"/>
     <property name="listeners">
      <list>
-       <bean class="com.admob.rocksteady.reactor.AlertUs">
+       <bean class="com.admob.rocksteady.reactor.Alerting">
            <property name="type" value="latency_multi"/>
        </bean>
      </list>
@@ -203,7 +202,7 @@
                          "/>
     <property name="listeners">
      <list>
-       <bean class="com.admob.rocksteady.reactor.AlertUs">
+       <bean class="com.admob.rocksteady.reactor.Alerting">
            <property name="type" value="deploy"/>
        </bean>
      </list>
