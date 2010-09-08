@@ -1,18 +1,18 @@
 /**
  * Copyright 2010 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
-**/
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ **/
 package com.admob.rocksteady.event;
 
 /**
@@ -20,20 +20,21 @@ package com.admob.rocksteady.event;
  */
 public enum Type {
 
-    TARGETING, ADS, USTORE, R2D2, R, NODE;
+  TARGETING, ADS, USTORE, R2D2, R, NODE;
 
-    // This helps convert string parameter to Enum type.
-    /**
-     * Convert a String value to a Type.  Default to NODE in case it can not map it.
-     *
-     * @param value String to convert
-     * @return string value to a Type.  Default to NODE in case it can not map it.
-     */
-    public static Type convert(String value) {
-        try {
-            return value == null || value.trim().length() == 0 ? NODE : Enum.valueOf(Type.class, value);
-        } catch (IllegalArgumentException ex) {
-            return NODE;
-        }
+  // This helps convert string parameter to Enum type.
+  /**
+   * Convert a String value to a Type. Default to NODE in case it can not map
+   * it.
+   *
+   * @param value String to convert
+   * @return string value to a Type. Default to NODE in case it can not map it.
+   */
+  public static Type convert(String value) {
+    try {
+      return value == null || value.trim().length() == 0 ? NODE : Enum.valueOf(Type.class, value);
+    } catch (IllegalArgumentException ex) {
+      return NODE;
     }
+  }
 }
