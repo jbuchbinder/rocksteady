@@ -99,7 +99,7 @@ public class Nagios implements UpdateListener {
         // This builds the message to be sent to nagios.
         MessagePayload payload = new MessagePayloadBuilder()
             .withHostname("localhost")
-            .withLevel(Level.CRITICAL)
+            .withLevel(level)
             .withServiceName(service)
             .withMessage(msg)
             .create();
