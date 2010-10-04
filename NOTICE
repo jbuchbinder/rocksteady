@@ -1,10 +1,16 @@
-=========================================================================
-==  NOTICE file corresponding to section 4(d) of the Apache License,   ==
-==  Version 2.0, in this case for the Barcode4J distribution.          ==
-=========================================================================
-
 Rocksteady
 
 This product includes software developed for project
 jsendnsca (http://code.google.com/p/jsendnsca/).
 
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+This product includes software developed at
+Spring Source (http://www.springsource.org/).
+
+This product includes software developed at
+Code Generation Library (http://cglib.sourceforge.net/)
+
+This product includes software developed at
+google-gson (http://code.google.com/p/google-gson/)

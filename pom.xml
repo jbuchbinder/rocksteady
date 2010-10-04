@@ -407,7 +407,6 @@
           </archive>
         </configuration>
       </plugin>
-
     </plugins>
 	</build>
 	<dependencyManagement>

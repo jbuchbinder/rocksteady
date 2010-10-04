@@ -20,6 +20,7 @@
         <include>NOTICE*</include>
         <include>COPYING*</include>
         <include>setup.sql</include>
+        <include>pom.xml</include>
       </includes>
     </fileSet>
     <fileSet>
@@ -35,9 +36,6 @@
     <fileSet>
       <directory>target/libs</directory>
       <outputDirectory>libs</outputDirectory>
-      <excludes>
-        <exclude>*esper*</exclude>
-      </excludes>
     </fileSet>
   </fileSets>
 </assembly>
