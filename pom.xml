@@ -407,6 +407,42 @@
           </archive>
         </configuration>
       </plugin>
+
+      <plugin>
+ <groupId>org.codehaus.mojo</groupId>
+ <artifactId>rpm-maven-plugin</artifactId>
+ <version>2.0</version>
+ <executions>
+   <execution>
+     <goals>
+       <goal>rpm</goal>
+     </goals>
+   </execution>
+ </executions>
+ <configuration>
+   <copyright>GPLv2</copyright>
+   <prefix>/opt/rocksteady</prefix>
+   <group>System/Monitoring</group>
+   <mappings>
+     <mapping>
+       <directory>/opt/rocksteady/classes</directory>
+       <sources>
+   <source>
+     <location>target/classes</location>
+   </source>
+       </sources>
+     </mapping>
+     <mapping>
+       <directory>/opt/rocksteady/libs</directory>
+       <sources>
+   <source>
+     <location>target/libs</location>
+   </source>
+       </sources>
+     </mapping>
+   </mappings>
+ </configuration>
+      </plugin>
     </plugins>
 	</build>
 	<dependencyManagement>
