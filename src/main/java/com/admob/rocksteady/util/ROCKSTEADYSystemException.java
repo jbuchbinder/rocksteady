@@ -40,6 +40,8 @@ public class ROCKSTEADYSystemException extends RuntimeException {
    */
   public ROCKSTEADYSystemException(String msg, Exception e) {
     super(msg, e);
+
+    e.printStackTrace();
   }
 
   public ROCKSTEADYSystemException(String msg) {

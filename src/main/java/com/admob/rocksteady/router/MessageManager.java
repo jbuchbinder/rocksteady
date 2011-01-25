@@ -117,11 +117,16 @@ public class MessageManager implements Service, Startable {
           // WE HAVE A DELIVERY!!!
           // We going to pass the message to another object and let it handle
           // the parsing.
-          ComplexEventManager.getInstance().sendEvent(new Metric(new String(delivery.getBody())));
-          // Message m = new Message(new String(delivery.getBody()));
-
+          String body = new String(delivery.getBody());
+          String[] metrics = body.split("\n");
+          for (String m: metrics) {
+            try {
+              ComplexEventManager.getInstance().sendEvent(new Metric(m));
+            } catch (Exception e) {
+              logger.error("Trouble handling metric: " + m);
+            }
+          }
         }
-
 
         // Acknowledge the delivery
         mqChannel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
@@ -163,9 +168,8 @@ public class MessageManager implements Service, Startable {
       mqConnection = mqConnectionFactory.newConnection(rabbitHostname);
       mqChannel = mqConnection.createChannel();
       // Now we have connection
-      mqChannel.exchangeDeclare(rabbitExchange, rabbitExchangeType);
-      // mqChannel.exchangeDeclare(rabbitExchangeLog, rabbitExchangeType);
-      // mqChannel.queueDelete(rabbitQueue);
+      //mqChannel.exchangeDelete(rabbitExchange);
+      mqChannel.exchangeDeclare(rabbitExchange, rabbitExchangeType, false, rabbitDurable, rabbitAutoDelete, null);
 
       // Add a random string to queue name so each instance of rocksteady will
       // have its own queue
